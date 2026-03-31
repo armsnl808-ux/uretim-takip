@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Üretim Takip">
+<meta name="theme-color" content="#0f172a">
+<title>Üretim Takip</title>
+<style>
+:root {
+  --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
+  --card: #1e293b; --border: rgba(255,255,255,0.08);
+  --text: #f1f5f9; --muted: #94a3b8;
+  --accent: #38bdf8; --accent2: #0ea5e9;
+  --green: #4ade80; --red: #f87171; --amber: #fbbf24;
+  --radius: 14px; --radius-sm: 8px;
+  --safe-top: env(safe-area-inset-top,0px);
+  --safe-bottom: env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Text',sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#header{padding:calc(var(--safe-top) + 14px) 20px 14px;background:var(--bg);border-bottom:0.5px solid var(--border);flex-shrink:0}
+#header h1{font-size:20px;font-weight:700;letter-spacing:-0.5px;display:flex;align-items:center;gap:10px}
+#header p{font-size:12px;color:var(--muted);margin-top:2px}
+.dot{width:8px;height:8px;border-radius:50%;background:#64748b;flex-shrink:0;transition:background 0.3s}
+.dot.live{background:var(--green);box-shadow:0 0 6px rgba(74,222,128,0.5)}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--safe-bottom) + 70px)}
+#tabbar{position:fixed;bottom:0;left:0;right:0;padding-bottom:var(--safe-bottom);background:rgba(15,23,42,0.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:0.5px solid var(--border);display:flex;z-index:100}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;gap:4px;font-size:10px;color:var(--muted);cursor:pointer;transition:color 0.2s}
+.tab.active{color:var(--accent)}
+.tab-icon{font-size:20px;line-height:1}
+.screen{display:none;padding:16px}.screen.active{display:block}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:11px 13px;border:0.5px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);font-size:15px;background:var(--bg3);color:var(--text);font-family:inherit;outline:none;appearance:none;-webkit-appearance:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(14,165,233,0.15)}
+.fld textarea{min-height:72px;resize:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:block;width:100%;padding:14px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity 0.15s,transform 0.1s;margin-bottom:8px}
+.btn:active{transform:scale(0.98);opacity:0.85}
+.btn-p{background:var(--accent2);color:#fff}
+.btn-s{background:var(--bg3);color:var(--text)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.met{background:var(--bg2);border-radius:var(--radius-sm);padding:13px;border:0.5px solid var(--border)}
+.met .ml{font-size:11px;color:var(--muted);margin-bottom:3px}
+.met .mv{font-size:26px;font-weight:700}
+.mv-g{color:var(--green)}.mv-r{color:var(--red)}.mv-a{color:var(--amber)}.mv-b{color:var(--accent)}
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.card-hd{padding:10px 14px;background:rgba(255,255,255,0.03);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid var(--border)}
+.rtbl{width:100%;border-collapse:collapse;font-size:13px}
+.rtbl th{padding:8px 10px;text-align:left;font-size:11px;color:var(--muted);font-weight:500;border-bottom:0.5px solid var(--border)}
+.rtbl td{padding:9px 10px;border-bottom:0.5px solid var(--border)}
+.rtbl tr:last-child td{border-bottom:none}
+.li{border:0.5px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:9px;background:var(--card)}
+.li-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.li-code{font-weight:700;font-size:15px}
+.li-meta{font-size:12px;color:var(--muted);margin-bottom:2px}
+.li-bot{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b-ok{background:rgba(74,222,128,0.12);color:var(--green)}
+.b-warn{background:rgba(251,191,36,0.12);color:var(--amber)}
+.b-fail{background:rgba(248,113,113,0.12);color:var(--red)}
+.del-btn{padding:5px 10px;border-radius:6px;border:none;background:rgba(248,113,113,0.15);color:var(--red);font-size:11px;font-weight:600;cursor:pointer}
+.chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.chip{padding:6px 13px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg2);color:var(--muted);font-size:12px;cursor:pointer}
+.chip.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.srch{width:100%;padding:11px 13px;border:0.5px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);font-size:15px;background:var(--bg3);color:var(--text);font-family:inherit;outline:none;appearance:none;margin-bottom:10px}
+.empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
+.empty-icon{font-size:36px;margin-bottom:8px}
+#toast{position:fixed;top:calc(var(--safe-top) + 72px);left:50%;transform:translateX(-50%) translateY(-8px);font-size:13px;font-weight:600;padding:9px 18px;border-radius:20px;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{background:var(--green);color:#000}
+#toast.err{background:var(--red);color:#fff}
+.loader{text-align:center;padding:24px;color:var(--muted);font-size:13px}
+.hata-li{background:rgba(248,113,113,0.07);border:0.5px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px}
+.hata-li .hc{font-weight:700;font-size:14px;color:var(--red)}
+.hata-li .hm{font-size:12px;color:var(--muted);margin-top:2px}
+.hata-li .hn{font-size:12px;color:var(--red);margin-top:5px;font-style:italic}
+.sub-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1><span id="conn-dot" class="dot"></span>Üretim Takip</h1>
+    <p id="hdr-sub">Bağlanıyor...</p>
+  </div>
+  <div id="content">
+
+    <div id="screen-giris" class="screen active">
+      <div class="frow">
+        <div class="fld"><label>Firma</label><input id="ff" placeholder="Firma adı" autocomplete="off"></div>
+        <div class="fld"><label>Ürün kodu</label><input id="fu" placeholder="PRD-001" autocomplete="off"></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Tarih</label><input id="ft" type="date"></div>
+        <div class="fld"><label>Saat</label><input id="fs" type="time"></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Bölüm</label>
+          <select id="fb"><option value="">Seçiniz</option><option>Press</option><option>CNC</option><option>Örgü</option></select>
+        </div>
+        <div class="fld"><label>Miktar</label><div style="display:flex;gap:6px"><input id="fm" type="number" inputmode="numeric" placeholder="0" min="0" style="flex:1"><select id="fbirim" style="width:76px"><option value="adet">adet</option><option value="kg">kg</option></select></div></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Kalite durumu</label>
+          <select id="fk"><option value="Geçti">Geçti</option><option value="Beklemede">Beklemede</option><option value="Hatalı">Hatalı</option></select>
+        </div>
+        <div class="fld"><label>Operatör</label><input id="fo" placeholder="Ad soyad" autocomplete="off"></div>
+      </div>
+      <div class="fld"><label>Not / açıklama</label><textarea id="fn" placeholder="Hata açıklaması veya gözlem..."></textarea></div>
+      <button class="btn btn-p" onclick="kaydet()">Kaydet</button>
+      <button class="btn btn-s" onclick="temizle()">Temizle</button>
+    </div>
+
+    <div id="screen-liste" class="screen">
+      <input class="srch" id="ara" placeholder="Ara..." oninput="rl()">
+      <div class="chips">
+        <div class="chip on" onclick="setF('',this)">Tümü</div>
+        <div class="chip" onclick="setF('Geçti',this)">Geçti</div>
+        <div class="chip" onclick="setF('Beklemede',this)">Beklemede</div>
+        <div class="chip" onclick="setF('Hatalı',this)">Hatalı</div>
+      </div>
+      <div id="lb"><div class="loader">Yükleniyor...</div></div>
+    </div>
+
+    <div id="screen-rapor" class="screen">
+      <div class="metrics" id="mets"><div class="loader" style="grid-column:span 2">Yükleniyor...</div></div>
+      <div class="card">
+        <div class="card-hd">Bölüm özeti</div>
+        <table class="rtbl">
+          <thead><tr><th>Bölüm</th><th>Toplam</th><th>Geçti</th><th>Hatalı</th><th>Oran</th></tr></thead>
+          <tbody id="rb"></tbody>
+        </table>
+      </div>
+      <div class="sub-title">Hatalı kayıtlar</div>
+      <div id="hl"></div>
+    </div>
+
+  </div>
+  <div id="tabbar">
+    <div class="tab active" onclick="goTab('giris',this)"><div class="tab-icon">＋</div><span>Giriş</span></div>
+    <div class="tab" onclick="goTab('liste',this)"><div class="tab-icon">☰</div><span>Kayıtlar</span></div>
+    <div class="tab" onclick="goTab('rapor',this)"><div class="tab-icon">◎</div><span>Rapor</span></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCOs7c1iAqP3eXe7ZV75XO3TLVVlgl3G5I",
+  authDomain: "uretim-takip-b9c08.firebaseapp.com",
+  projectId: "uretim-takip-b9c08",
+  storageBucket: "uretim-takip-b9c08.firebasestorage.app",
+  messagingSenderId: "10233509206",
+  appId: "1:10233509206:web:b95af114f7d6f1012252f7",
+  measurementId: "G-85LZ2SNTDW"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let data = [];
+let fil = '';
+
+function td(){return new Date().toISOString().split('T')[0]}
+function tn(){return new Date().toTimeString().slice(0,5)}
+function initF(){
+  document.getElementById('ft').value = td();
+  document.getElementById('fs').value = tn();
+}
+
+function updateHeader(){
+  document.getElementById('hdr-sub').textContent = data.length + ' kayıt · ' + new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('conn-dot').className = 'dot live';
+}
+
+const q = query(collection(db, 'kayitlar'), orderBy('createdAt','desc'));
+onSnapshot(q, (snapshot) => {
+  data = snapshot.docs.map(d => ({...d.data(), _id: d.id}));
+  updateHeader();
+  const activeTab = document.querySelector('.tab.active');
+  const tabName = activeTab ? activeTab.getAttribute('data-tab') : 'giris';
+  if(tabName === 'liste') rl();
+  if(tabName === 'rapor') rr();
+}, (err) => {
+  console.error(err);
+  document.getElementById('hdr-sub').textContent = 'Bağlantı hatası';
+  toast('Firestore bağlantı hatası', 'err');
+});
+
+window.kaydet = async function(){
+  const u = document.getElementById('fu').value.trim();
+  const f = document.getElementById('ff').value.trim();
+  const t = document.getElementById('ft').value;
+  const s = document.getElementById('fs').value;
+  const b = document.getElementById('fb').value;
+  const m = parseInt(document.getElementById('fm').value) || 0;
+  const birim = document.getElementById('fbirim').value;
+  const k = document.getElementById('fk').value;
+  const o = document.getElementById('fo').value.trim();
+  const n = document.getElementById('fn').value.trim();
+  if(!u||!f||!t||!b){alert('Ürün kodu, firma, tarih ve bölüm zorunludur.');return;}
+  try {
+    await addDoc(collection(db,'kayitlar'),{u,f,t,s,b,m,birim,k,o,n,createdAt:serverTimestamp()});
+    toast('Kayıt eklendi ✓','ok');
+    temizle();
+  } catch(e){
+    console.error(e);
+    toast('Kayıt eklenemedi','err');
+  }
+};
+
+window.sil = async function(id){
+  if(!confirm('Bu kayıt silinsin mi?')) return;
+  try {
+    await deleteDoc(doc(db,'kayitlar',id));
+    toast('Kayıt silindi','ok');
+  } catch(e){
+    toast('Silinemedi','err');
+  }
+};
+
+window.temizle = function(){
+  ['fu','ff','fo','fn'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('fm').value='';
+  document.getElementById('fbirim').value='adet';
+  document.getElementById('fb').value='';
+  document.getElementById('fk').value='Geçti';
+  initF();
+};
+
+window.setF = function(v, el){
+  fil = v;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  rl();
+};
+
+window.rl = function(){
+  const q2 = (document.getElementById('ara')||{}).value || '';
+  const qlow = q2.toLowerCase();
+  const rows = data.filter(x=>{
+    const match = !qlow || (x.u+x.f+x.b+x.o).toLowerCase().includes(qlow);
+    return match && (!fil || x.k===fil);
+  });
+  const lb = document.getElementById('lb');
+  if(!rows.length){lb.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Kayıt bulunamadı</div>';return;}
+  lb.innerHTML = rows.map(x=>`<div class="li">
+    <div class="li-top"><span class="li-code">${x.u}</span><span class="bdg ${bc(x.k)}">${x.k}</span></div>
+    <div class="li-meta">${x.f} · ${x.b}</div>
+    <div class="li-meta">${x.t} ${x.s}${x.o?' · '+x.o:''}</div>
+    ${x.n?`<div class="li-meta" style="font-style:italic;margin-top:3px;color:#94a3b8">${x.n}</div>`:''}
+    <div class="li-bot"><span style="font-size:12px;color:#94a3b8">${x.m} ${x.birim||'adet'}</span><button class="del-btn" onclick="sil('${x._id}')">Sil</button></div>
+  </div>`).join('');
+};
+
+window.rr = function(){
+  const tot = data.length;
+  const g = data.filter(x=>x.k==='Geçti').length;
+  const h = data.filter(x=>x.k==='Hatalı').length;
+  const p = tot ? Math.round(g/tot*100) : 0;
+  document.getElementById('mets').innerHTML=`
+    <div class="met"><div class="ml">Toplam kayıt</div><div class="mv mv-b">${tot}</div></div>
+    <div class="met"><div class="ml">Başarı oranı</div><div class="mv ${p>=90?'mv-g':p>=70?'mv-a':'mv-r'}">${p}%</div></div>
+    <div class="met"><div class="ml">Geçti</div><div class="mv mv-g">${g}</div></div>
+    <div class="met"><div class="ml">Hatalı</div><div class="mv mv-r">${h}</div></div>
+  `;
+  const bols = [...new Set(data.map(x=>x.b))];
+  const rb = document.getElementById('rb');
+  rb.innerHTML = !bols.length ? '<tr><td colspan="5" style="padding:12px;color:#94a3b8">Kayıt yok</td></tr>' :
+    bols.map(b=>{
+      const r = data.filter(x=>x.b===b);
+      const gx = r.filter(x=>x.k==='Geçti').length;
+      const hx = r.filter(x=>x.k==='Hatalı').length;
+      const px = r.length ? Math.round(gx/r.length*100) : 0;
+      return `<tr><td>${b}</td><td>${r.length}</td><td style="color:#4ade80">${gx}</td><td style="color:#f87171">${hx}</td><td><span class="bdg ${px>=90?'b-ok':px>=70?'b-warn':'b-fail'}">${px}%</span></td></tr>`;
+    }).join('');
+  const hata = data.filter(x=>x.k==='Hatalı');
+  const hl = document.getElementById('hl');
+  hl.innerHTML = !hata.length ? '<div class="empty">Hatalı kayıt yok</div>' :
+    hata.map(x=>`<div class="hata-li"><div class="hc">${x.u}</div><div class="hm">${x.f} · ${x.b} · ${x.t} ${x.s}</div>${x.n?`<div class="hn">${x.n}</div>`:''}</div>`).join('');
+};
+
+window.goTab = function(name, el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');t.removeAttribute('data-tab');});
+  document.getElementById('screen-'+name).classList.add('active');
+  el.classList.add('active');
+  el.setAttribute('data-tab', name);
+  if(name==='liste') rl();
+  if(name==='rapor') rr();
+};
+
+function bc(k){return k==='Geçti'?'b-ok':k==='Hatalı'?'b-fail':'b-warn'}
+
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type||'ok');
+  setTimeout(()=>t.className='',2200);
+}
+
+initF();
+</script>
+</body>
+</html>
